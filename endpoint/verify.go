@@ -7,10 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 )
 
+// Authorization is used to interact with the `jwt` package
 type Authorization struct {
 	ID      string `json:"sub"`
 	Session string `json:"https://ataper.net/session"`
@@ -22,19 +23,14 @@ type Authorization struct {
 	Issuer string `json:"iss"`
 }
 
+// Anonymous returns whether this authorization lacks an identity
 func (a Authorization) Anonymous() bool {
 	return a.ID == ""
 }
 
+// Valid implements jwt.Authorization
 func (a Authorization) Valid() error {
 	return nil
-}
-
-type JWTParser interface {
-}
-
-type JWTGenerator interface {
-	SignedString(key interface{}) (string, error)
 }
 
 // NewVerifyEndpoint returns a new HTTP handler for requests to the
