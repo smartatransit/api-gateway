@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -43,6 +44,8 @@ func NewVerifyEndpoint(
 	jwtSigningSecret string,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("[INFO]", r.Method, r.URL.String())
+
 		authHeader, ok := r.Header["Authorization"]
 		if !ok || len(authHeader) == 0 {
 			tokenString, err := jwt.NewWithClaims(
@@ -50,15 +53,18 @@ func NewVerifyEndpoint(
 				generateAnonymousAuthorization(serviceDomain),
 			).SignedString([]byte(jwtSigningSecret))
 			if err != nil {
+				fmt.Println("[ERROR]", err.Error())
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
+			w.Header().Set("Content-Type", "applicatipn/json")
 			w.WriteHeader(http.StatusForbidden)
 			err = json.NewEncoder(w).Encode(map[string]interface{}{
 				"token": tokenString,
 			})
 			if err != nil {
+				fmt.Println("[ERROR]", err.Error())
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -77,8 +83,8 @@ func NewVerifyEndpoint(
 			return []byte(jwtSigningSecret), nil
 		})
 		if err != nil {
+			fmt.Println("[ERROR]", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			// TODO include messages for each of the 500s?
 			return
 		}
 

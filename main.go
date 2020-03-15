@@ -22,7 +22,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// TODO better routing?
 	http.Handle("/v1/verify", endpoints.NewVerifyEndpoint(options.ServiceDomain, options.JWTSigningSecret))
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", options.Port), nil))
