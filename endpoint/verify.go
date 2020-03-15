@@ -54,14 +54,9 @@ func NewVerifyEndpoint(
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusForbidden)
-			err = json.NewEncoder(w).Encode(map[string]interface{}{
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
 				"token": tokenString,
 			})
-			if err != nil {
-				fmt.Println("[ERROR]", err.Error())
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
 
 			return
 		}
@@ -77,8 +72,7 @@ func NewVerifyEndpoint(
 			return []byte(jwtSigningSecret), nil
 		})
 		if err != nil {
-			fmt.Println("[ERROR]", err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
