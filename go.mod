@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/coreos/go-oidc v2.2.1+incompatible // indirect
-	github.com/davecgh/go-spew v1.1.1
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/google/uuid v1.1.1
 	github.com/jessevdk/go-flags v1.4.0

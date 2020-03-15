@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 )
@@ -45,12 +44,8 @@ func NewVerifyEndpoint(
 	jwtSigningSecret string,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("[INFO]", r.Method, r.URL.String())
-
 		authHeader, ok := r.Header["Authorization"]
 		if !ok || len(authHeader) == 0 {
-			fmt.Println("[DETAIL]", "no authorization - issuing anonymous token")
-
 			tokenString, err := jwt.NewWithClaims(
 				jwt.GetSigningMethod(jwt.SigningMethodHS256.Alg()),
 				generateAnonymousAuthorization(serviceDomain),
@@ -72,7 +67,6 @@ func NewVerifyEndpoint(
 				return
 			}
 
-			fmt.Println("[DETAIL]", "token issued")
 			return
 		}
 
@@ -92,10 +86,6 @@ func NewVerifyEndpoint(
 			return
 		}
 
-		fmt.Println("[DETAIL]", "token has claims")
-		spew.Dump(auth)
-
-		fmt.Println("[DETAIL]", "passing request")
 		setClaimHeaders(w, auth)
 		w.WriteHeader(http.StatusOK)
 	})
