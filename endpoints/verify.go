@@ -61,7 +61,7 @@ func NewVerifyEndpoint(
 				return
 			}
 
-			w.Header().Set("Content-Type", "applicatipn/json")
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusForbidden)
 			err = json.NewEncoder(w).Encode(map[string]interface{}{
 				"token": tokenString,
