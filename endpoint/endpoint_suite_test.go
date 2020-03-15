@@ -1,4 +1,4 @@
-package endpoints_test
+package endpoint_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestEndpoints(t *testing.T) {
+func TestEndpoint(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Endpoints Suite")
+	RunSpecs(t, "Endpoint Suite")
 }

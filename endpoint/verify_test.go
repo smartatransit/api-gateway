@@ -1,4 +1,4 @@
-package endpoints_test
+package endpoint_test
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 
-	"github.com/smartatransit/api-gateway/endpoints"
+	"github.com/smartatransit/api-gateway/endpoint"
 )
 
 var _ = Describe("NewVerifyEndpoint", func() {
@@ -19,7 +19,7 @@ var _ = Describe("NewVerifyEndpoint", func() {
 		r *http.Request
 		w *httptest.ResponseRecorder
 
-		auth *endpoints.Authorization
+		auth *endpoint.Authorization
 
 		resp *http.Response
 	)
@@ -28,7 +28,7 @@ var _ = Describe("NewVerifyEndpoint", func() {
 		r, _ = http.NewRequest("GET", "/path", nil)
 		w = httptest.NewRecorder()
 
-		auth = &endpoints.Authorization{
+		auth = &endpoint.Authorization{
 			ID:      "ID-Value",
 			Session: "Session-Value",
 			Role:    "Role-Value",
@@ -49,7 +49,7 @@ var _ = Describe("NewVerifyEndpoint", func() {
 			r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenString))
 		}
 
-		endpoints.NewVerifyEndpoint("api-gateway.example.com", "secret").
+		endpoint.NewVerifyEndpoint("api-gateway.example.com", "secret").
 			ServeHTTP(w, r)
 
 		resp = w.Result()
@@ -71,7 +71,7 @@ var _ = Describe("NewVerifyEndpoint", func() {
 				var body = map[string]string{}
 				Expect(json.NewDecoder(resp.Body).Decode(&body)).To(BeNil())
 
-				var auth endpoints.Authorization
+				var auth endpoint.Authorization
 				_, err := jwt.ParseWithClaims(body["token"], &auth, func(*jwt.Token) (interface{}, error) {
 					return []byte("secret"), nil
 				})
