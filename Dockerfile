@@ -4,7 +4,7 @@ WORKDIR /src
 COPY go.mod go.mod
 COPY go.sum go.sum
 COPY vendor/ vendor/
-COPY endpoints/ endpoints/
+COPY endpoint/ endpoint/
 COPY main.go main.go
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -a -installsuffix cgo -o api
 
