@@ -14,11 +14,11 @@ import (
 // Authorization is used to interact with the `jwt` package
 type Authorization struct {
 	ID      string `json:"sub"`
-	Session string `json:"https://ataper.net/session"`
-	Role    string `json:"https://ataper.net/role"`
+	Session string `json:"https://jwt.ataper.net/session"`
+	Role    string `json:"https://jwt.ataper.net/role"`
 
-	Phone string `json:"https://ataper.net/phone"`
-	Email string `json:"https://ataper.net/email"`
+	Phone string `json:"https://jwt.ataper.net/phone"`
+	Email string `json:"https://jwt.ataper.net/email"`
 
 	Issuer string `json:"iss"`
 }
@@ -53,7 +53,7 @@ func NewVerifyEndpoint(
 			}
 
 			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusForbidden)
+			w.WriteHeader(http.StatusUnauthorized)
 			_ = json.NewEncoder(w).Encode(map[string]interface{}{
 				"token": tokenString,
 			})
