@@ -35,6 +35,7 @@ func main() {
 		options.ClientID,
 		options.ClientSecret,
 		options.Auth0ClientAudience,
+		http.DefaultClient,
 	)
 
 	// NOTE: this service will receive requests forwarded from traefik, which were intended for
