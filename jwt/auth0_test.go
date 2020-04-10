@@ -41,7 +41,7 @@ var _ = Describe("Tokener", func() {
 				doer.DoReturns(nil, errors.New("request failed"))
 			})
 			It("fails", func() {
-				Expect(err).To(MatchError("failed obtaining new anonymous access token: request failed"))
+				Expect(err).To(MatchError("failed obtaining new access token: request failed"))
 			})
 		})
 		When("the status code is non-normal", func() {
@@ -52,7 +52,7 @@ var _ = Describe("Tokener", func() {
 				}, nil)
 			})
 			It("fails", func() {
-				Expect(err).To(MatchError("failed obtaining new anonymous access token: status code 302"))
+				Expect(err).To(MatchError("failed obtaining new access token: status code 302"))
 			})
 		})
 		When("the response can't be decoded", func() {
@@ -63,7 +63,7 @@ var _ = Describe("Tokener", func() {
 				}, nil)
 			})
 			It("fails", func() {
-				Expect(err).To(MatchError("failed decoding new anonymous access token: unexpected EOF"))
+				Expect(err).To(MatchError("failed decoding new access token: unexpected EOF"))
 			})
 		})
 		Context("otherwise", func() {
