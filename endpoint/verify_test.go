@@ -2,54 +2,47 @@ package endpoint_test
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/smartatransit/api-gateway/endpoint"
+	"github.com/smartatransit/api-gateway/jwt"
+	"github.com/smartatransit/api-gateway/jwt/jwtfakes"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
-
-	"github.com/smartatransit/api-gateway/endpoint"
 )
 
 var _ = Describe("NewVerifyEndpoint", func() {
 	var (
+		parser *jwtfakes.FakeParser
+		anon   *jwtfakes.FakeTokener
+
 		r *http.Request
 		w *httptest.ResponseRecorder
-
-		auth *endpoint.Authorization
 
 		resp *http.Response
 	)
 
 	BeforeEach(func() {
-		r, _ = http.NewRequest("GET", "/path", nil)
-		w = httptest.NewRecorder()
+		parser = &jwtfakes.FakeParser{}
+		anon = &jwtfakes.FakeTokener{}
 
-		auth = &endpoint.Authorization{
-			ID:      "ID-Value",
+		anon.GetTokenReturns("good-token", nil)
+		parser.ParseTokenReturns(jwt.Authorization{
 			Session: "Session-Value",
 			Role:    "Role-Value",
-			Phone:   "Phone-Value",
-			Email:   "Email-Value",
-			Issuer:  "Issuer-Value",
-		}
+		}, nil)
+
+		r, _ = http.NewRequest("GET", "/path", nil)
+		r.Header.Set("Authorization", "Bearer token")
+		w = httptest.NewRecorder()
 	})
 
 	JustBeforeEach(func() {
-		if auth != nil {
-			tokenString, err := jwt.NewWithClaims(
-				jwt.GetSigningMethod(jwt.SigningMethodHS256.Alg()),
-				auth,
-			).SignedString([]byte("secret"))
-			Expect(err).To(BeNil())
-
-			r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenString))
-		}
-
-		endpoint.NewVerifyEndpoint("api-gateway.example.com", "secret").
+		endpoint.NewVerifyEndpoint(parser, anon).
 			ServeHTTP(w, r)
 
 		resp = w.Result()
@@ -57,70 +50,48 @@ var _ = Describe("NewVerifyEndpoint", func() {
 
 	When("there is no Authorization header", func() {
 		BeforeEach(func() {
-			auth = nil
 			r.Header.Del("Authorization")
 		})
-		When("when generating the anonymous token fails", func() {
-			// NOTE inaccessible
-		})
-		When("when the new token can't be written to the response", func() {
-			// NOTE inaccessible
+		When("when fetching the anonymous token fails", func() {
+			BeforeEach(func() {
+				anon.GetTokenReturns("", errors.New("failed fetching token"))
+			})
+			It("fails", func() {
+				Expect(resp.StatusCode).To(Equal(http.StatusInternalServerError))
+			})
 		})
 		When("all goes well", func() {
 			It("returns a new anonymous token", func() {
 				var body = map[string]string{}
 				Expect(json.NewDecoder(resp.Body).Decode(&body)).To(BeNil())
 
-				var auth endpoint.Authorization
-				_, err := jwt.ParseWithClaims(body["token"], &auth, func(*jwt.Token) (interface{}, error) {
-					return []byte("secret"), nil
-				})
-				Expect(err).To(BeNil())
-
-				Expect(auth).To(MatchAllFields(Fields{
-					"ID":      BeEmpty(),
-					"Session": MatchRegexp("[0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12}"),
-					"Role":    Equal("anonymous"),
-					"Phone":   BeEmpty(),
-					"Email":   BeEmpty(),
-					"Issuer":  Equal("api-gateway.example.com"),
-				}))
+				Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+				Expect(body["token"]).To(Equal("good-token"))
 			})
 		})
 	})
 	When("the Bearer schema is malformed", func() {
-		// TODO
+		BeforeEach(func() {
+			r.Header.Set("Authorization", "Bear token")
+		})
+		It("fails", func() {
+			Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+		})
 	})
 	When("the token is malformed or has a bad signature", func() {
-		// TODO
+		BeforeEach(func() {
+			parser.ParseTokenReturns(jwt.Authorization{}, errors.New("parse failed"))
+		})
+		It("fails", func() {
+			Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+		})
 	})
 	Context("otherwise", func() {
-		It("responds with the correct X-Ataper-Auth-* headers", func() {
+		It("calls SetAuthHeaders and then response with OK", func() {
 			Expect(resp.Header).To(MatchKeys(IgnoreExtras, Keys{
-				"X-Ataper-Auth-Id":        ConsistOf(Equal("ID-Value")),
-				"X-Ataper-Auth-Session":   ConsistOf(Equal("Session-Value")),
-				"X-Ataper-Auth-Anonymous": ConsistOf(Equal("false")),
-				"X-Ataper-Auth-Role":      ConsistOf(Equal("Role-Value")),
-				"X-Ataper-Auth-Issuer":    ConsistOf(Equal("Issuer-Value")),
-				"X-Ataper-Auth-Phone":     ConsistOf(Equal("Phone-Value")),
-				"X-Ataper-Auth-Email":     ConsistOf(Equal("Email-Value")),
+				"X-Ataper-Auth-Session": ConsistOf(Equal("Session-Value")),
+				"X-Ataper-Auth-Role":    ConsistOf(Equal("Role-Value")),
 			}))
-		})
-		When("when the token is anonymous", func() {
-			BeforeEach(func() {
-				auth.ID = ""
-			})
-			It("responds with the correct X-Ataper-Auth-* headers", func() {
-				Expect(resp.Header).To(MatchKeys(IgnoreExtras, Keys{
-					"X-Ataper-Auth-Id":        ConsistOf(Equal("")),
-					"X-Ataper-Auth-Session":   ConsistOf(Equal("Session-Value")),
-					"X-Ataper-Auth-Anonymous": ConsistOf(Equal("true")),
-					"X-Ataper-Auth-Role":      ConsistOf(Equal("Role-Value")),
-					"X-Ataper-Auth-Issuer":    ConsistOf(Equal("Issuer-Value")),
-					"X-Ataper-Auth-Phone":     ConsistOf(Equal("Phone-Value")),
-					"X-Ataper-Auth-Email":     ConsistOf(Equal("Email-Value")),
-				}))
-			})
 		})
 	})
 })
