@@ -102,8 +102,8 @@ var _ = Describe("Authorization", func() {
 			}.SetAuthHeaders(rw)
 
 			Expect(rw.Result().Header).To(MatchAllKeys(Keys{
-				"X-Ataper-Auth-Session": ConsistOf("sess"),
-				"X-Ataper-Auth-Role":    ConsistOf("role"),
+				"X-Smarta-Auth-Session": ConsistOf("sess"),
+				"X-Smarta-Auth-Role":    ConsistOf("role"),
 			}))
 		})
 	})
