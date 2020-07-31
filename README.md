@@ -1,2 +1,2 @@
 # api-gateway
-An API gateway for Ataper services
+An API gateway for smartatransit services

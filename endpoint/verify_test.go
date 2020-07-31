@@ -89,8 +89,8 @@ var _ = Describe("NewVerifyEndpoint", func() {
 	Context("otherwise", func() {
 		It("calls SetAuthHeaders and then response with OK", func() {
 			Expect(resp.Header).To(MatchKeys(IgnoreExtras, Keys{
-				"X-Ataper-Auth-Session": ConsistOf(Equal("Session-Value")),
-				"X-Ataper-Auth-Role":    ConsistOf(Equal("Role-Value")),
+				"X-Smarta-Auth-Session": ConsistOf(Equal("Session-Value")),
+				"X-Smarta-Auth-Role":    ConsistOf(Equal("Role-Value")),
 			}))
 		})
 	})

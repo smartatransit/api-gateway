@@ -11,15 +11,15 @@ import (
 
 // Authorization is used to interact with the `jwt` package
 type Authorization struct {
-	Session string `json:"https://jwt.ataper.net/session"`
-	Role    string `json:"https://jwt.ataper.net/role"`
+	Session string `json:"https://jwt.smartatransit.com/session"`
+	Role    string `json:"https://jwt.smartatransit.com/role"`
 }
 
 // SetAuthHeaders converts the authorization claims into
-// X-Ataper-Auth headers.
+// X-Smarta-Auth headers.
 func (a Authorization) SetAuthHeaders(w http.ResponseWriter) {
-	w.Header().Set("X-Ataper-Auth-Session", a.Session)
-	w.Header().Set("X-Ataper-Auth-Role", a.Role)
+	w.Header().Set("X-Smarta-Auth-Session", a.Session)
+	w.Header().Set("X-Smarta-Auth-Role", a.Role)
 }
 
 // Valid implements jwt.Authorization
