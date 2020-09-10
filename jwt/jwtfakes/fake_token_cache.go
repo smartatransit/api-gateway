@@ -10,12 +10,13 @@ import (
 )
 
 type FakeTokenCache struct {
-	AddTokenStub        func(context.Context, string, time.Time)
+	AddTokenStub        func(context.Context, string, string, time.Time)
 	addTokenMutex       sync.RWMutex
 	addTokenArgsForCall []struct {
 		arg1 context.Context
 		arg2 string
-		arg3 time.Time
+		arg3 string
+		arg4 time.Time
 	}
 	CleanStub        func(context.Context)
 	cleanMutex       sync.RWMutex
@@ -40,17 +41,18 @@ type FakeTokenCache struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeTokenCache) AddToken(arg1 context.Context, arg2 string, arg3 time.Time) {
+func (fake *FakeTokenCache) AddToken(arg1 context.Context, arg2 string, arg3 string, arg4 time.Time) {
 	fake.addTokenMutex.Lock()
 	fake.addTokenArgsForCall = append(fake.addTokenArgsForCall, struct {
 		arg1 context.Context
 		arg2 string
-		arg3 time.Time
-	}{arg1, arg2, arg3})
-	fake.recordInvocation("AddToken", []interface{}{arg1, arg2, arg3})
+		arg3 string
+		arg4 time.Time
+	}{arg1, arg2, arg3, arg4})
+	fake.recordInvocation("AddToken", []interface{}{arg1, arg2, arg3, arg4})
 	fake.addTokenMutex.Unlock()
 	if fake.AddTokenStub != nil {
-		fake.AddTokenStub(arg1, arg2, arg3)
+		fake.AddTokenStub(arg1, arg2, arg3, arg4)
 	}
 }
 
@@ -60,17 +62,17 @@ func (fake *FakeTokenCache) AddTokenCallCount() int {
 	return len(fake.addTokenArgsForCall)
 }
 
-func (fake *FakeTokenCache) AddTokenCalls(stub func(context.Context, string, time.Time)) {
+func (fake *FakeTokenCache) AddTokenCalls(stub func(context.Context, string, string, time.Time)) {
 	fake.addTokenMutex.Lock()
 	defer fake.addTokenMutex.Unlock()
 	fake.AddTokenStub = stub
 }
 
-func (fake *FakeTokenCache) AddTokenArgsForCall(i int) (context.Context, string, time.Time) {
+func (fake *FakeTokenCache) AddTokenArgsForCall(i int) (context.Context, string, string, time.Time) {
 	fake.addTokenMutex.RLock()
 	defer fake.addTokenMutex.RUnlock()
 	argsForCall := fake.addTokenArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
 func (fake *FakeTokenCache) Clean(arg1 context.Context) {
