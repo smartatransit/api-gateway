@@ -11,6 +11,7 @@ import (
 
 // Authorization is used to interact with the `jwt` package
 type Authorization struct {
+	jwt.StandardClaims
 	Session string `json:"https://jwt.smartatransit.com/session"`
 	Role    string `json:"https://jwt.smartatransit.com/role"`
 }
@@ -24,7 +25,7 @@ func (a Authorization) SetAuthHeaders(w http.ResponseWriter) {
 
 // Valid implements jwt.Authorization
 func (a Authorization) Valid() error {
-	return nil
+	return a.StandardClaims.Valid()
 }
 
 // Parser parses a JWT into an Authorization struct
