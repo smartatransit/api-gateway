@@ -23,6 +23,17 @@ type Auth0Tokener struct {
 	doer    Doer
 }
 
+// TokenerFactory builds a tokener for a specific Auth0 client identity
+//go:generate counterfeiter . TokenerFactory
+type TokenerFactory func(clientID, clientSecret string) Tokener
+
+// NewTokenerFactory returns a new tokener factory
+func NewTokenerFactory(url, audience string, doer Doer) TokenerFactory {
+	return func(clientID, clientSecret string) Tokener {
+		return NewTokener(url, clientID, clientSecret, audience, doer)
+	}
+}
+
 // NewTokener builds an Auth0Tokener from the specified auth0
 // API url, client id, and secret.
 func NewTokener(url, clientID, clientSecret, audience string, doer Doer) Auth0Tokener {

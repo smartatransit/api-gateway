@@ -3,9 +3,11 @@ package endpoint_test
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/sirupsen/logrus"
 	"github.com/smartatransit/api-gateway/endpoint"
 	"github.com/smartatransit/api-gateway/jwt"
 	"github.com/smartatransit/api-gateway/jwt/jwtfakes"
@@ -17,8 +19,11 @@ import (
 
 var _ = Describe("NewVerifyEndpoint", func() {
 	var (
+		log    *logrus.Logger
 		parser *jwtfakes.FakeParser
 		anon   *jwtfakes.FakeTokener
+		fact   *jwtfakes.FakeTokenerFactory
+		tCache *jwtfakes.FakeTokenCache
 
 		r *http.Request
 		w *httptest.ResponseRecorder
@@ -29,6 +34,11 @@ var _ = Describe("NewVerifyEndpoint", func() {
 	BeforeEach(func() {
 		parser = &jwtfakes.FakeParser{}
 		anon = &jwtfakes.FakeTokener{}
+		fact = &jwtfakes.FakeTokenerFactory{}
+		tCache = &jwtfakes.FakeTokenCache{}
+
+		log = logrus.New()
+		log.SetOutput(ioutil.Discard)
 
 		anon.GetTokenReturns("good-token", nil)
 		parser.ParseTokenReturns(jwt.Authorization{
@@ -42,7 +52,7 @@ var _ = Describe("NewVerifyEndpoint", func() {
 	})
 
 	JustBeforeEach(func() {
-		endpoint.NewVerifyEndpoint(parser, anon).
+		endpoint.NewVerifyEndpoint(log, parser, anon, tCache, fact.Spy).
 			ServeHTTP(w, r)
 
 		resp = w.Result()
@@ -67,6 +77,53 @@ var _ = Describe("NewVerifyEndpoint", func() {
 
 				Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 				Expect(body["token"]).To(Equal("good-token"))
+			})
+		})
+	})
+	When("there's a Key schema", func() {
+		When("it's malformed", func() {
+			BeforeEach(func() {
+				r.Header.Set("Authorization", "Key token")
+			})
+			It("fails", func() {
+				Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+			})
+		})
+		When("there's no cached token, and the Auth0 request fails", func() {
+			BeforeEach(func() {
+				r.Header.Set("Authorization", "Key id|secret")
+			})
+			BeforeEach(func() {
+				tokener := &jwtfakes.FakeTokener{}
+				tokener.GetTokenReturns("", errors.New("get token failed"))
+
+				fact.Returns(tokener)
+			})
+			It("fails", func() {
+				Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+				id, secret := fact.ArgsForCall(0)
+				Expect(id).To(Equal("id"))
+				Expect(secret).To(Equal("secret"))
+			})
+		})
+		When("all goes well", func() {
+			BeforeEach(func() {
+				r.Header.Set("Authorization", "Key id|secret")
+
+				tokener := &jwtfakes.FakeTokener{}
+				tokener.GetTokenReturns("my-special-token", nil)
+
+				fact.Returns(tokener)
+			})
+			It("succeeds", func() {
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+				id, secret := fact.ArgsForCall(0)
+				Expect(id).To(Equal("id"))
+				Expect(secret).To(Equal("secret"))
+
+				_, token := parser.ParseTokenArgsForCall(0)
+				Expect(token).To(Equal("my-special-token"))
 			})
 		})
 	})
